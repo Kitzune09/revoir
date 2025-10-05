@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Plus, BookOpen, Clock, Target, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Roadmap {
   id: string;
@@ -20,39 +23,66 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onCreateRoadmap }: DashboardProps) {
-  // Mock data - in real app this would come from state management
-  const roadmaps: Roadmap[] = [
-    {
-      id: "1",
-      title: "Complete React Mastery",
-      subject: "React Development",
-      progress: 65,
-      totalTasks: 12,
-      completedTasks: 8,
-      deadline: "Dec 31, 2024",
-      difficulty: "Intermediate"
-    },
-    {
-      id: "2", 
-      title: "Data Structures & Algorithms",
-      subject: "Computer Science",
-      progress: 30,
-      totalTasks: 20,
-      completedTasks: 6,
-      deadline: "Jan 15, 2025",
-      difficulty: "Advanced"
-    },
-    {
-      id: "3",
-      title: "UI/UX Design Fundamentals",
-      subject: "Design",
-      progress: 85,
-      totalTasks: 8,
-      completedTasks: 7,
-      deadline: "Nov 30, 2024",
-      difficulty: "Beginner"
+  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRoadmaps();
+  }, []);
+
+  const fetchRoadmaps = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: roadmapsData, error: roadmapsError } = await supabase
+        .from('roadmaps')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (roadmapsError) throw roadmapsError;
+
+      // Fetch subtasks for each roadmap
+      const roadmapsWithStats = await Promise.all(
+        (roadmapsData || []).map(async (roadmap) => {
+          const { data: subtasksData } = await supabase
+            .from('subtasks')
+            .select('*')
+            .eq('roadmap_id', roadmap.id);
+
+          const totalTasks = subtasksData?.length || 0;
+          const completedTasks = subtasksData?.filter(st => st.completed).length || 0;
+          const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+          return {
+            id: roadmap.id,
+            title: roadmap.title,
+            subject: roadmap.subject,
+            progress: progress,
+            totalTasks: totalTasks,
+            completedTasks: completedTasks,
+            deadline: roadmap.deadline ? new Date(roadmap.deadline).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            }) : 'No deadline',
+            difficulty: (roadmap.difficulty.charAt(0).toUpperCase() + roadmap.difficulty.slice(1)) as "Beginner" | "Intermediate" | "Advanced"
+          };
+        })
+      );
+
+      setRoadmaps(roadmapsWithStats);
+    } catch (error) {
+      console.error("Error fetching roadmaps:", error);
+      toast.error("Failed to load roadmaps");
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const stats = {
     totalRoadmaps: roadmaps.length,
@@ -69,6 +99,14 @@ export function Dashboard({ onCreateRoadmap }: DashboardProps) {
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Loading your roadmaps...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -138,7 +176,16 @@ export function Dashboard({ onCreateRoadmap }: DashboardProps) {
       {/* Roadmaps Grid */}
       <div>
         <h3 className="text-xl font-semibold text-foreground mb-4">Your Learning Roadmaps</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {roadmaps.length === 0 ? (
+          <Card className="bg-gradient-card border-border/50 p-8 text-center">
+            <p className="text-muted-foreground mb-4">No roadmaps yet. Create your first learning roadmap to get started!</p>
+            <Button onClick={onCreateRoadmap} className="bg-primary hover:bg-primary-hover">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Your First Roadmap
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {roadmaps.map((roadmap) => (
             <Card key={roadmap.id} className="bg-gradient-card border-border/50 hover:shadow-lg transition-all duration-300 cursor-pointer group">
               <CardHeader className="pb-3">
@@ -169,8 +216,9 @@ export function Dashboard({ onCreateRoadmap }: DashboardProps) {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

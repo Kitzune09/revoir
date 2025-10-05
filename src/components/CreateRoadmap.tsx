@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, BookOpen, Target, Clock, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface Subtask {
   id: string;
@@ -18,6 +20,7 @@ interface Subtask {
 }
 
 export function CreateRoadmap() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -69,26 +72,72 @@ export function CreateRoadmap() {
     setSubtasks(prev => prev.filter(task => task.id !== id));
   };
 
-  const createRoadmap = () => {
+  const createRoadmap = async () => {
     if (!formData.title || !formData.subject || subtasks.length === 0) {
       toast("Please fill in all required fields and add at least one subtask");
       return;
     }
 
-    // Here you would typically save to state management or backend
-    console.log("Creating roadmap:", { ...formData, subtasks });
-    toast("Roadmap created successfully! 🎉");
-    
-    // Reset form
-    setFormData({
-      title: "",
-      subject: "",
-      description: "",
-      difficulty: "",
-      deadline: "",
-      tags: [],
-    });
-    setSubtasks([]);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to create a roadmap");
+        return;
+      }
+
+      console.log("Creating roadmap:", { ...formData, subtasks });
+
+      // Insert roadmap
+      const { data: roadmap, error: roadmapError } = await supabase
+        .from('roadmaps')
+        .insert({
+          user_id: user.id,
+          title: formData.title,
+          subject: formData.subject,
+          description: formData.description,
+          difficulty: formData.difficulty,
+          deadline: formData.deadline || null,
+          tags: formData.tags,
+        })
+        .select()
+        .single();
+
+      if (roadmapError) throw roadmapError;
+
+      // Insert subtasks
+      const subtasksToInsert = subtasks.map(subtask => ({
+        roadmap_id: roadmap.id,
+        title: subtask.title,
+        description: subtask.description,
+        estimated_hours: subtask.estimatedHours,
+      }));
+
+      const { error: subtasksError } = await supabase
+        .from('subtasks')
+        .insert(subtasksToInsert);
+
+      if (subtasksError) throw subtasksError;
+
+      toast.success("Roadmap created successfully! 🎉");
+      
+      // Reset form
+      setFormData({
+        title: "",
+        subject: "",
+        description: "",
+        difficulty: "",
+        deadline: "",
+        tags: [],
+      });
+      setSubtasks([]);
+      
+      // Navigate to dashboard
+      navigate('/');
+    } catch (error) {
+      console.error("Error creating roadmap:", error);
+      toast.error("Failed to create roadmap. Please try again.");
+    }
   };
 
   return (
