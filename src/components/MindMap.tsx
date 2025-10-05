@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -17,6 +17,9 @@ import '@xyflow/react/dist/style.css';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Custom node component for roadmap tasks
 function TaskNode({ data }: { data: any }) {
@@ -96,114 +99,173 @@ const nodeTypes = {
 };
 
 export function MindMap() {
-  // Sample roadmap data - in real app this would come from props or state
-  const initialNodes: Node[] = [
-    {
-      id: 'goal',
-      type: 'goal',
-      position: { x: 400, y: 50 },
-      data: { 
-        title: 'Complete React Mastery',
-        subject: 'React Development',
-        progress: 65
-      },
-      draggable: false,
-    },
-    {
-      id: 'task-1',
-      type: 'task',
-      position: { x: 100, y: 200 },
-      data: {
-        title: 'Learn React Fundamentals',
-        description: 'Understand components, props, and state',
-        completed: true,
-        estimatedHours: 20,
-        difficulty: 'easy'
-      },
-    },
-    {
-      id: 'task-2', 
-      type: 'task',
-      position: { x: 350, y: 200 },
-      data: {
-        title: 'Master React Hooks',
-        description: 'useState, useEffect, useContext, custom hooks',
-        completed: true,
-        estimatedHours: 15,
-        difficulty: 'medium'
-      },
-    },
-    {
-      id: 'task-3',
-      type: 'task', 
-      position: { x: 600, y: 200 },
-      data: {
-        title: 'State Management',
-        description: 'Learn Redux, Zustand, or Context API patterns',
-        completed: false,
-        estimatedHours: 25,
-        difficulty: 'hard'
-      },
-    },
-    {
-      id: 'task-4',
-      type: 'task',
-      position: { x: 225, y: 350 },
-      data: {
-        title: 'React Router',
-        description: 'Navigation and routing in React apps',
-        completed: false,
-        estimatedHours: 10,
-        difficulty: 'medium'
-      },
-    },
-    {
-      id: 'task-5',
-      type: 'task',
-      position: { x: 475, y: 350 },
-      data: {
-        title: 'Testing React Apps',
-        description: 'Jest, React Testing Library, E2E tests',
-        completed: false,
-        estimatedHours: 20,
-        difficulty: 'hard'
-      },
-    },
-    {
-      id: 'task-6',
-      type: 'task',
-      position: { x: 350, y: 500 },
-      data: {
-        title: 'Build Portfolio Project',
-        description: 'Create a full-stack React application',
-        completed: false,
-        estimatedHours: 40,
-        difficulty: 'hard'
-      },
-    },
-  ];
+  const [roadmaps, setRoadmaps] = useState<any[]>([]);
+  const [selectedRoadmapId, setSelectedRoadmapId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const initialEdges: Edge[] = [
-    { id: 'goal-task1', source: 'goal', target: 'task-1', type: 'smoothstep' },
-    { id: 'goal-task2', source: 'goal', target: 'task-2', type: 'smoothstep' },
-    { id: 'goal-task3', source: 'goal', target: 'task-3', type: 'smoothstep' },
-    { id: 'task1-task4', source: 'task-1', target: 'task-4', type: 'smoothstep' },
-    { id: 'task2-task4', source: 'task-2', target: 'task-4', type: 'smoothstep' },
-    { id: 'task3-task5', source: 'task-3', target: 'task-5', type: 'smoothstep' },
-    { id: 'task4-task6', source: 'task-4', target: 'task-6', type: 'smoothstep' },
-    { id: 'task5-task6', source: 'task-5', target: 'task-6', type: 'smoothstep' },
-  ];
+  // Fetch all roadmaps
+  useEffect(() => {
+    fetchRoadmaps();
+  }, []);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const fetchRoadmaps = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: roadmapsData, error } = await supabase
+        .from('roadmaps')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setRoadmaps(roadmapsData || []);
+      if (roadmapsData && roadmapsData.length > 0) {
+        setSelectedRoadmapId(roadmapsData[0].id);
+      }
+    } catch (error) {
+      console.error("Error fetching roadmaps:", error);
+      toast.error("Failed to load roadmaps");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch subtasks and build graph when roadmap is selected
+  useEffect(() => {
+    if (selectedRoadmapId) {
+      loadRoadmapGraph(selectedRoadmapId);
+    }
+  }, [selectedRoadmapId]);
+
+  const loadRoadmapGraph = async (roadmapId: string) => {
+    try {
+      // Fetch roadmap details
+      const { data: roadmap, error: roadmapError } = await supabase
+        .from('roadmaps')
+        .select('*')
+        .eq('id', roadmapId)
+        .single();
+
+      if (roadmapError) throw roadmapError;
+
+      // Fetch subtasks
+      const { data: subtasks, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('roadmap_id', roadmapId);
+
+      if (subtasksError) throw subtasksError;
+
+      // Calculate progress
+      const totalTasks = subtasks?.length || 0;
+      const completedTasks = subtasks?.filter(st => st.completed).length || 0;
+      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      // Build nodes
+      const newNodes: Node[] = [
+        {
+          id: 'goal',
+          type: 'goal',
+          position: { x: 400, y: 50 },
+          data: { 
+            title: roadmap.title,
+            subject: roadmap.subject,
+            progress: progress
+          },
+          draggable: false,
+        },
+      ];
+
+      // Add subtask nodes
+      const tasksPerRow = 3;
+      subtasks?.forEach((subtask, index) => {
+        const row = Math.floor(index / tasksPerRow);
+        const col = index % tasksPerRow;
+        const xOffset = 300;
+        const yOffset = 200;
+        
+        newNodes.push({
+          id: `task-${subtask.id}`,
+          type: 'task',
+          position: { 
+            x: xOffset * col + 100, 
+            y: yOffset * (row + 1)
+          },
+          data: {
+            title: subtask.title,
+            description: subtask.description,
+            completed: subtask.completed,
+            estimatedHours: subtask.estimated_hours,
+            difficulty: roadmap.difficulty
+          },
+        });
+      });
+
+      // Build edges
+      const newEdges: Edge[] = subtasks?.map((subtask) => ({
+        id: `goal-task-${subtask.id}`,
+        source: 'goal',
+        target: `task-${subtask.id}`,
+        type: 'smoothstep',
+      })) || [];
+
+      setNodes(newNodes);
+      setEdges(newEdges);
+    } catch (error) {
+      console.error("Error loading roadmap graph:", error);
+      toast.error("Failed to load roadmap visualization");
+    }
+  };
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
+  if (loading) {
+    return (
+      <div className="h-[600px] w-full rounded-lg border border-border bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading roadmaps...</p>
+      </div>
+    );
+  }
+
+  if (roadmaps.length === 0) {
+    return (
+      <div className="h-[600px] w-full rounded-lg border border-border bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">No roadmaps yet. Create your first roadmap to see it visualized here!</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-[600px] w-full rounded-lg border border-border bg-background">
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium text-foreground">Select Roadmap:</label>
+        <Select value={selectedRoadmapId || ''} onValueChange={setSelectedRoadmapId}>
+          <SelectTrigger className="w-[300px]">
+            <SelectValue placeholder="Select a roadmap" />
+          </SelectTrigger>
+          <SelectContent>
+            {roadmaps.map((roadmap) => (
+              <SelectItem key={roadmap.id} value={roadmap.id}>
+                {roadmap.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="h-[600px] w-full rounded-lg border border-border bg-background">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -233,6 +295,7 @@ export function MindMap() {
         />
         <Background color="hsl(var(--muted-foreground))" gap={20} />
       </ReactFlow>
+      </div>
     </div>
   );
 }
