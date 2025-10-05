@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
-import { Moon, Sun, BookOpen, Target, Calendar, Trophy, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Moon, Sun, BookOpen, Target, Calendar, Trophy, Plus, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface NavigationProps {
   activeTab: string;
@@ -10,9 +12,15 @@ interface NavigationProps {
 
 export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
   const { theme, setTheme } = useTheme();
+  const { signOut, user } = useAuth();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out successfully");
   };
 
   const navItems = [
@@ -54,18 +62,34 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
         </div>
       </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={toggleTheme}
-        className="p-2"
-      >
-        {theme === "dark" ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
+      <div className="flex items-center gap-2">
+        {user && (
+          <span className="text-sm text-muted-foreground mr-2">
+            {user.email}
+          </span>
         )}
-      </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleTheme}
+          className="p-2"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSignOut}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sign Out</span>
+        </Button>
+      </div>
     </nav>
   );
 }
