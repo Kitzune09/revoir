@@ -10,6 +10,7 @@ import { Calendar, Trophy } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [mindMapKey, setMindMapKey] = useState(0);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -37,7 +38,10 @@ const Index = () => {
       case "dashboard":
         return <Dashboard onCreateRoadmap={() => setActiveTab("create")} />;
       case "create":
-        return <CreateRoadmap />;
+        return <CreateRoadmap onSuccess={() => {
+          setMindMapKey(prev => prev + 1);
+          setActiveTab("calendar");
+        }} />;
       case "calendar":
         return (
           <div className="p-6 space-y-6 animate-fade-in">
@@ -55,7 +59,7 @@ const Index = () => {
                   <CardTitle>Interactive Mind Map</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <MindMap />
+                  <MindMap key={mindMapKey} />
                 </CardContent>
               </Card>
             </div>

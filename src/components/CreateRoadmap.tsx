@@ -19,7 +19,11 @@ interface Subtask {
   prerequisites: string[];
 }
 
-export function CreateRoadmap() {
+interface CreateRoadmapProps {
+  onSuccess?: () => void;
+}
+
+export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -132,8 +136,12 @@ export function CreateRoadmap() {
       });
       setSubtasks([]);
       
-      // Navigate to dashboard
-      navigate('/');
+      // Call onSuccess callback or navigate to dashboard
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error("Error creating roadmap:", error);
       toast.error("Failed to create roadmap. Please try again.");
