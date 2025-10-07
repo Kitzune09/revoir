@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, BookOpen, Target, Clock, Lightbulb } from "lucide-react";
+import { Plus, X, BookOpen, Target, Clock, Lightbulb, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +41,7 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
     estimatedHours: 0,
   });
   const [newTag, setNewTag] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const addTag = () => {
     if (newTag && !formData.tags.includes(newTag)) {
@@ -74,6 +75,46 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
 
   const removeSubtask = (id: string) => {
     setSubtasks(prev => prev.filter(task => task.id !== id));
+  };
+
+  const generateRoadmapWithAI = async () => {
+    if (!formData.title || !formData.subject) {
+      toast.error("Please enter a title and subject first");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('decompose-goal', {
+        body: {
+          goal: formData.title,
+          subject: formData.subject,
+          difficulty: formData.difficulty || 'intermediate',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.subtasks && Array.isArray(data.subtasks)) {
+        const aiSubtasks: Subtask[] = data.subtasks.map((task: any, index: number) => ({
+          id: `ai-${Date.now()}-${index}`,
+          title: task.title,
+          description: task.description,
+          estimatedHours: task.estimated_hours || 0,
+          prerequisites: task.prerequisites || [],
+        }));
+
+        setSubtasks(aiSubtasks);
+        toast.success(`Generated ${aiSubtasks.length} subtasks with AI! 🎉`);
+      } else {
+        throw new Error('Invalid response from AI');
+      }
+    } catch (error) {
+      console.error("Error generating roadmap:", error);
+      toast.error("Failed to generate roadmap. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const createRoadmap = async () => {
@@ -256,10 +297,22 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
         {/* Subtasks */}
         <Card className="bg-gradient-card border-border/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-primary" />
-              Learning Subtasks
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-primary" />
+                Learning Subtasks
+              </CardTitle>
+              <Button
+                onClick={generateRoadmapWithAI}
+                disabled={isGenerating || !formData.title || !formData.subject}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                {isGenerating ? "Generating..." : "AI Generate"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">

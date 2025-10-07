@@ -60,28 +60,37 @@ export type Database = {
         Row: {
           completed: boolean | null
           created_at: string
+          deadline: string | null
+          dependencies: string[] | null
           description: string | null
           estimated_hours: number | null
           id: string
           roadmap_id: string
+          status: string | null
           title: string
         }
         Insert: {
           completed?: boolean | null
           created_at?: string
+          deadline?: string | null
+          dependencies?: string[] | null
           description?: string | null
           estimated_hours?: number | null
           id?: string
           roadmap_id: string
+          status?: string | null
           title: string
         }
         Update: {
           completed?: boolean | null
           created_at?: string
+          deadline?: string | null
+          dependencies?: string[] | null
           description?: string | null
           estimated_hours?: number | null
           id?: string
           roadmap_id?: string
+          status?: string | null
           title?: string
         }
         Relationships: [

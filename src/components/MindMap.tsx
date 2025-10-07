@@ -12,6 +12,7 @@ import {
   Node,
   Handle,
   Position,
+  NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
@@ -20,10 +21,18 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TaskDetailsModal } from './TaskDetailsModal';
 
 // Custom node component for roadmap tasks
-function TaskNode({ data }: { data: any }) {
-  const { title, description, completed, estimatedHours, difficulty } = data;
+function TaskNode({ data }: NodeProps) {
+  const { title, description, completed, estimatedHours, difficulty, onClick } = data as {
+    title: string;
+    description: string | null;
+    completed: boolean;
+    estimatedHours: number;
+    difficulty: string;
+    onClick: () => void;
+  };
   
   const getDifficultyColor = (level: string) => {
     switch (level) {
@@ -35,10 +44,13 @@ function TaskNode({ data }: { data: any }) {
   };
 
   return (
-    <div className={cn(
-      "p-4 rounded-lg border-2 bg-gradient-card min-w-[200px] max-w-[250px] shadow-md transition-all hover:shadow-lg",
-      completed ? "border-success bg-success/10" : "border-border hover:border-primary"
-    )}>
+    <div 
+      className={cn(
+        "p-4 rounded-lg border-2 bg-gradient-card min-w-[200px] max-w-[250px] shadow-md transition-all hover:shadow-lg cursor-pointer",
+        completed ? "border-success bg-success/10" : "border-border hover:border-primary"
+      )}
+      onClick={onClick}
+    >
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-primary border-2 border-background" />
       
       <div className="space-y-2">
@@ -102,8 +114,10 @@ export function MindMap() {
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [selectedRoadmapId, setSelectedRoadmapId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesState] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   // Fetch all roadmaps
@@ -205,7 +219,8 @@ export function MindMap() {
             description: subtask.description,
             completed: subtask.completed,
             estimatedHours: subtask.estimated_hours,
-            difficulty: roadmap.difficulty
+            difficulty: roadmap.difficulty,
+            onClick: () => handleTaskClick(subtask),
           },
         });
       });
@@ -223,6 +238,17 @@ export function MindMap() {
     } catch (error) {
       console.error("Error loading roadmap graph:", error);
       toast.error("Failed to load roadmap visualization");
+    }
+  };
+
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleTaskUpdate = () => {
+    if (selectedRoadmapId) {
+      loadRoadmapGraph(selectedRoadmapId);
     }
   };
 
@@ -266,36 +292,45 @@ export function MindMap() {
       </div>
       
       <div className="h-[600px] w-full rounded-lg border border-border bg-background">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        fitView
-        className="bg-muted/10"
-        defaultEdgeOptions={{
-          style: { strokeWidth: 2, stroke: 'hsl(var(--primary))' },
-          markerEnd: {
-            type: 'arrowclosed',
-            width: 20,
-            height: 20,
-            color: 'hsl(var(--primary))',
-          },
-        }}
-      >
-        <Controls className="bg-card border border-border" />
-        <MiniMap 
-          className="bg-card border border-border"
-          nodeColor={(node) => {
-            if (node.type === 'goal') return 'hsl(var(--primary))';
-            return node.data.completed ? 'hsl(var(--success))' : 'hsl(var(--muted))';
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesState}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          className="bg-muted/10"
+          defaultEdgeOptions={{
+            style: { strokeWidth: 2, stroke: 'hsl(var(--primary))' },
+            markerEnd: {
+              type: 'arrowclosed',
+              width: 20,
+              height: 20,
+              color: 'hsl(var(--primary))',
+            },
           }}
-        />
-        <Background color="hsl(var(--muted-foreground))" gap={20} />
-      </ReactFlow>
+        >
+          <Controls className="bg-card border border-border" />
+          <MiniMap 
+            className="bg-card border border-border"
+            nodeColor={(node) => {
+              if (node.type === 'goal') return 'hsl(var(--primary))';
+              return node.data.completed ? 'hsl(var(--success))' : 'hsl(var(--muted))';
+            }}
+          />
+          <Background color="hsl(var(--muted-foreground))" gap={20} />
+        </ReactFlow>
       </div>
+
+      {selectedTask && (
+        <TaskDetailsModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          task={selectedTask}
+          onUpdate={handleTaskUpdate}
+        />
+      )}
     </div>
   );
 }
