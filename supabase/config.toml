@@ -1,4 +1,7 @@
 project_id = "bmppwxoxmnbvmvbslytv"
 
 [functions.decompose-goal]
-verify_jwt = true
+verify_jwt = false
+
+[functions.generate-study-plan]
+verify_jwt = false
