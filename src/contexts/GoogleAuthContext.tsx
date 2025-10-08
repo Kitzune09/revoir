@@ -13,6 +13,7 @@ interface GoogleAuthContextType {
   isSignedIn: boolean;
   isInitialized: boolean;
   signIn: () => Promise<void>;
+  signInAndExecute: (action: () => void) => Promise<void>;
   signOut: () => Promise<void>;
   addEventsToCalendar: (events: CalendarEvent[]) => Promise<void>;
   listUpcomingEvents: () => Promise<any[]>;
@@ -33,6 +34,7 @@ export function GoogleAuthProvider({ children }: { children: React.ReactNode }) 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(true); // Set to true to avoid blocking
   const [selectedCalendarId] = useState('primary');
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     const initializeGoogleAPI = async () => {
@@ -46,6 +48,15 @@ export function GoogleAuthProvider({ children }: { children: React.ReactNode }) 
 
   const signIn = async () => {
     throw new Error('Google Calendar integration requires API configuration. Please configure your Google API credentials.');
+  };
+
+  const signInAndExecute = async (action: () => void) => {
+    if (isSignedIn) {
+      action();
+    } else {
+      setPendingAction(() => action);
+      await signIn();
+    }
   };
 
   const signOut = async () => {
@@ -65,6 +76,7 @@ export function GoogleAuthProvider({ children }: { children: React.ReactNode }) 
     isSignedIn,
     isInitialized,
     signIn,
+    signInAndExecute,
     signOut,
     addEventsToCalendar,
     listUpcomingEvents,

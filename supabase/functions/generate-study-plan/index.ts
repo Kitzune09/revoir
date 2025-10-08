@@ -20,32 +20,45 @@ serve(async (req) => {
 
     console.log('Generating study plan with params:', { planType, hoursPerWeek, roadmap });
 
-    const systemPrompt = `You are an expert study planner. Create a realistic, well-paced study schedule based on the provided learning roadmap.
+    const systemPrompt = `You are an expert academic scheduler. Your job is to take a learning roadmap and convert it into a practical, day-by-day study plan that fits into the user's schedule.
 
 Guidelines:
-- Schedule sessions during weekdays (Monday-Friday) between 9 AM and 9 PM
-- Each study session should be 1-3 hours long
-- Distribute ${hoursPerWeek} hours per week across the subtasks
-- Consider estimated hours for each subtask
-- Create a ${planType} plan
-- Space out sessions appropriately to avoid burnout
-- Include breaks between intensive sessions`;
+1. Act as a scheduler - distribute the roadmap modules across days and time slots
+2. Each study session should be 1-2 hours long maximum
+3. Respect the user's weekly hour constraints (${hoursPerWeek} hours per week)
+4. Space sessions realistically (allow rest days, avoid cramming)
+5. Start scheduling from today: October 8, 2025
+6. Use realistic times (9 AM - 8 PM range, avoid late nights)
+7. Each session description should include specific topics from the module
+8. Return ONLY valid JSON - no explanatory text, no markdown formatting
 
-    const userPrompt = `Create a detailed study plan for this learning roadmap:
+CRITICAL: Return ONLY a valid JSON object. No additional commentary.`;
 
+    const userPrompt = `Schedule the following roadmap into a ${planType} study plan.
+
+**Constraints:**
+- Study Hours Per Week: ${hoursPerWeek} hours
+- Start Date: Today, October 8, 2025
+- Plan Type: ${planType}
+
+**Roadmap Data:**
 Title: ${roadmap.title}
 Subject: ${roadmap.subject}
 Description: ${roadmap.description || 'No description'}
 
-Subtasks:
+Subtasks to schedule:
 ${roadmap.subtasks.map((st: any, i: number) => `${i + 1}. ${st.title} (${st.estimated_hours || 2}h) - ${st.description}`).join('\n')}
 
-Requirements:
-- Plan Type: ${planType}
-- Hours per week: ${hoursPerWeek}
-- Start date: ${new Date().toISOString()}
+**Output Requirements:**
+Return a JSON object with an "events" array. Each event MUST follow this exact schema:
+{
+  "summary": "Study Session: [Module Title]",
+  "description": "[Specific topics and details from the module]",
+  "start": { "dateTime": "2025-10-08T10:00:00-07:00" },
+  "end": { "dateTime": "2025-10-08T12:00:00-07:00" }
+}
 
-Generate a JSON array of calendar events following this exact schema for each session.`;
+Distribute all modules into manageable sessions across the schedule.`;
 
     const eventSchema = {
       type: "object",

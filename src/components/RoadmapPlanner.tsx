@@ -21,7 +21,7 @@ interface StudyEvent {
 }
 
 export default function RoadmapPlanner({ roadmapData }: RoadmapPlannerProps) {
-  const { isSignedIn, signIn, addEventsToCalendar } = useGoogleAuth();
+  const { signInAndExecute, addEventsToCalendar } = useGoogleAuth();
   const [planType, setPlanType] = useState<"weekly" | "monthly">("weekly");
   const [hoursPerWeek, setHoursPerWeek] = useState(10);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,28 +61,21 @@ export default function RoadmapPlanner({ roadmapData }: RoadmapPlannerProps) {
   };
 
   const handleAddToCalendar = async () => {
-    if (!isSignedIn) {
-      try {
-        await signIn();
-      } catch (error) {
-        toast.error("Please sign in to Google to add events to your calendar");
-        return;
-      }
-    }
-
-    if (generatedPlan.length === 0) {
-      toast.error("No study plan to add. Please generate a plan first.");
+    if (!generatedPlan || generatedPlan.length === 0) {
+      toast.error("No study plan to add");
       return;
     }
 
     setIsAddingToCalendar(true);
     try {
-      await addEventsToCalendar(generatedPlan);
-      toast.success("Success! Your study plan has been added to your Google Calendar 🎊");
+      await signInAndExecute(async () => {
+        await addEventsToCalendar(generatedPlan);
+        toast.success("Study plan added to your Google Calendar!");
+        setIsAddingToCalendar(false);
+      });
     } catch (error) {
-      console.error("Error adding events to calendar:", error);
-      toast.error("Failed to add events to calendar. Please try again.");
-    } finally {
+      console.error('Error adding to calendar:', error);
+      toast.error("Failed to add events to calendar");
       setIsAddingToCalendar(false);
     }
   };
