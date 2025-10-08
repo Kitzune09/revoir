@@ -1,3 +1,4 @@
+import CalendarPreview from "./CalendarPreview";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -220,6 +221,9 @@ export function Dashboard({ onCreateRoadmap }: DashboardProps) {
           </div>
         )}
       </div>
+
+      {/* Calendar Preview */}
+      <CalendarPreview />
     </div>
   );
 }
