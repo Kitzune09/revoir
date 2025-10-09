@@ -5,9 +5,8 @@ import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/components/Dashboard";
 import { CreateRoadmap } from "@/components/CreateRoadmap";
 import { MindMap } from "@/components/MindMap";
-import { Calendar } from "@/pages/Calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Trophy } from "lucide-react";
+import { Calendar, Trophy } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -37,14 +36,35 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard onCreateRoadmap={() => setActiveTab("roadmaps")} />;
-      case "roadmaps":
+        return <Dashboard onCreateRoadmap={() => setActiveTab("create")} />;
+      case "create":
         return <CreateRoadmap onSuccess={() => {
           setMindMapKey(prev => prev + 1);
           setActiveTab("calendar");
         }} />;
       case "calendar":
-        return <Calendar />;
+        return (
+          <div className="p-6 space-y-6 animate-fade-in">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
+                <Calendar className="h-8 w-8 text-primary" />
+                Study Calendar
+              </h2>
+              <p className="text-muted-foreground">Plan and track your study sessions</p>
+            </div>
+            
+            <div className="space-y-6">
+              <Card className="bg-gradient-card border-border/50">
+                <CardHeader>
+                  <CardTitle>Interactive Mind Map</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <MindMap key={mindMapKey} />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
       case "achievements":
         return (
           <div className="p-6 space-y-6 animate-fade-in">
@@ -88,7 +108,7 @@ const Index = () => {
           </div>
         );
       default:
-        return <Dashboard onCreateRoadmap={() => setActiveTab("roadmaps")} />;
+        return <Dashboard onCreateRoadmap={() => setActiveTab("create")} />;
     }
   };
 

@@ -25,7 +25,7 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: BookOpen },
-    { id: "roadmaps", label: "My Roadmaps", icon: Target },
+    { id: "create", label: "Create Roadmap", icon: Plus },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "achievements", label: "Achievements", icon: Trophy },
   ];
