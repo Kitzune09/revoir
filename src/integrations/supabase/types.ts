@@ -56,6 +56,50 @@ export type Database = {
         }
         Relationships: []
       }
+      study_plans: {
+        Row: {
+          created_at: string
+          hours_per_week: number
+          id: string
+          plan_data: Json
+          plan_type: string
+          roadmap_id: string
+          starting_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hours_per_week: number
+          id?: string
+          plan_data: Json
+          plan_type: string
+          roadmap_id: string
+          starting_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hours_per_week?: number
+          id?: string
+          plan_data?: Json
+          plan_type?: string
+          roadmap_id?: string
+          starting_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_plans_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subtasks: {
         Row: {
           completed: boolean | null

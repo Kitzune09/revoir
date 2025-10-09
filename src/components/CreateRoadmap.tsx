@@ -30,6 +30,7 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
     subject: "",
     description: "",
     difficulty: "",
+    startingDate: "",
     deadline: "",
     tags: [] as string[],
   });
@@ -118,8 +119,8 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
   };
 
   const createRoadmap = async () => {
-    if (!formData.title || !formData.subject || subtasks.length === 0) {
-      toast("Please fill in all required fields and add at least one subtask");
+    if (!formData.title || !formData.subject || !formData.startingDate || !formData.deadline || subtasks.length === 0) {
+      toast.error("Please fill in all required fields including starting date, deadline, and add at least one subtask");
       return;
     }
 
@@ -164,7 +165,46 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
 
       if (subtasksError) throw subtasksError;
 
-      toast.success("Roadmap created successfully! 🎉");
+      toast.success("Roadmap created. 🎉");
+
+      // Auto-generate study plan
+      try {
+        const roadmapWithSubtasks = {
+          ...roadmap,
+          subtasks: subtasksToInsert,
+        };
+
+        const { data: planData, error: planError } = await supabase.functions.invoke('generate-study-plan', {
+          body: {
+            roadmap: roadmapWithSubtasks,
+            planType: 'weekly',
+            hoursPerWeek: 10,
+          },
+        });
+
+        if (planError) throw planError;
+
+        if (planData?.events && Array.isArray(planData.events)) {
+          // Store the generated plan
+          const { error: storePlanError } = await supabase
+            .from('study_plans')
+            .insert({
+              roadmap_id: roadmap.id,
+              user_id: user.id,
+              plan_data: planData.events,
+              plan_type: 'weekly',
+              hours_per_week: 10,
+              starting_date: formData.startingDate,
+            });
+
+          if (storePlanError) throw storePlanError;
+
+          toast.success("Calendar curated. 📅");
+        }
+      } catch (planError) {
+        console.error("Error generating study plan:", planError);
+        toast.error("Roadmap created but failed to generate calendar plan");
+      }
       
       // Reset form
       setFormData({
@@ -172,6 +212,7 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
         subject: "",
         description: "",
         difficulty: "",
+        startingDate: "",
         deadline: "",
         tags: [],
       });
@@ -239,23 +280,33 @@ export function CreateRoadmap({ onSuccess }: CreateRoadmapProps = {}) {
               />
             </div>
 
+            <div>
+              <Label htmlFor="difficulty">Difficulty Level</Label>
+              <Select value={formData.difficulty} onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="difficulty">Difficulty Level</Label>
-                <Select value={formData.difficulty} onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beginner">Beginner</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="advanced">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="startingDate">Starting Date *</Label>
+                <Input
+                  id="startingDate"
+                  type="date"
+                  value={formData.startingDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startingDate: e.target.value }))}
+                />
               </div>
 
               <div>
-                <Label htmlFor="deadline">Target Deadline</Label>
+                <Label htmlFor="deadline">Target Deadline *</Label>
                 <Input
                   id="deadline"
                   type="date"
