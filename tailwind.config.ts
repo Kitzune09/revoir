@@ -61,7 +61,8 @@ export default {
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))'
-				}
+				},
+				'hover-glow': 'hsl(var(--hover-glow))'
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
@@ -72,7 +73,8 @@ export default {
 				'sm': 'var(--shadow-sm)',
 				'md': 'var(--shadow-md)',
 				'lg': 'var(--shadow-lg)',
-				'orange': 'var(--shadow-orange)'
+				'orange': 'var(--shadow-orange)',
+				'hover-glow': 'var(--hover-glow-shadow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
