@@ -43,7 +43,17 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
       <div className="flex items-center space-x-8">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-            <Target className="h-5 w-5 text-primary-foreground" />
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 20 20" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-primary-foreground"
+            >
+              <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+              <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+            </svg>
           </div>
           <h1 className="text-xl font-bold text-foreground">Luminary</h1>
         </div>
