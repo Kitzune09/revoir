@@ -1,9 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/contexts/AuthContext";
-import { Moon, Sun, BookOpen, Target, Calendar, Trophy, Plus, LogOut } from "lucide-react";
+import { Moon, Sun, BookOpen, Target, Calendar, Trophy, Plus, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavigationProps {
   activeTab: string;
@@ -63,11 +71,6 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        {user && (
-          <span className="text-sm text-muted-foreground mr-2">
-            {user.email}
-          </span>
-        )}
         <Button
           variant="outline"
           size="sm"
@@ -80,15 +83,31 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
             <Moon className="h-4 w-4" />
           )}
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSignOut}
-          className="flex items-center gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Sign Out</span>
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="p-2">
+              <User className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">Account</p>
+                {user && (
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </nav>
   );
