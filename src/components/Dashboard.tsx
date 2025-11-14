@@ -115,7 +115,7 @@ export function Dashboard({ onCreateRoadmap }: DashboardProps) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Learning Dashboard</h2>
-          <p className="text-muted-foreground">Track your progress and stay motivated</p>
+          <p className="text-muted-foreground">Track. Optimize. Illuminate.</p>
         </div>
         <Button onClick={onCreateRoadmap} className="bg-primary hover:bg-primary-hover shadow-orange">
           <Plus className="h-4 w-4 mr-2" />
