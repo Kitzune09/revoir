@@ -58,8 +58,9 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
                 size="sm"
                 onClick={() => setActiveTab(item.id)}
                 className={cn(
-                  "flex items-center space-x-2",
-                  activeTab === item.id && "bg-primary text-primary-foreground shadow-orange"
+                  "flex items-center space-x-2 transition-all duration-300",
+                  activeTab === item.id && "bg-primary text-primary-foreground shadow-orange",
+                  "hover:shadow-hover-glow"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -75,7 +76,7 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
           variant="outline"
           size="sm"
           onClick={toggleTheme}
-          className="p-2"
+          className="p-2 transition-all duration-300 hover:shadow-hover-glow"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />
@@ -86,7 +87,7 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="p-2">
+            <Button variant="outline" size="sm" className="p-2 transition-all duration-300 hover:shadow-hover-glow">
               <User className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

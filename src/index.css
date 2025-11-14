@@ -57,6 +57,10 @@ All colors MUST be HSL.
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
     --shadow-orange: 0 8px 30px -12px hsl(16 100% 60% / 0.3);
+    
+    /* Hover glow effects */
+    --hover-glow: 24 100% 49%;
+    --hover-glow-shadow: 0 0 20px hsl(24 100% 49% / 0.4), 0 0 40px hsl(24 100% 49% / 0.2);
 
     --radius: 0.5rem;
 
@@ -127,6 +131,10 @@ All colors MUST be HSL.
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
     --shadow-orange: 0 8px 30px -12px hsl(16 100% 60% / 0.4);
+    
+    /* Dark mode hover glow effects */
+    --hover-glow: 318 82% 57%;
+    --hover-glow-shadow: 0 0 20px hsl(318 82% 57% / 0.5), 0 0 40px hsl(318 82% 57% / 0.3);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -145,5 +153,15 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--hover-glow-shadow);
   }
 }
