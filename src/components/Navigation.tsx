@@ -37,7 +37,7 @@ export function Navigation({ activeTab, setActiveTab }: NavigationProps) {
           <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
             <Target className="h-5 w-5 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">LearnPath</h1>
+          <h1 className="text-xl font-bold text-foreground">Luminary</h1>
         </div>
         
         <div className="flex space-x-1">
