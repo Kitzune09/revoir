@@ -10,99 +10,11 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
-      roadmaps: {
-        Row: {
-          created_at: string
-          deadline: string | null
-          description: string | null
-          difficulty: string
-          id: string
-          progress: number | null
-          subject: string
-          tags: string[] | null
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          deadline?: string | null
-          description?: string | null
-          difficulty: string
-          id?: string
-          progress?: number | null
-          subject: string
-          tags?: string[] | null
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          deadline?: string | null
-          description?: string | null
-          difficulty?: string
-          id?: string
-          progress?: number | null
-          subject?: string
-          tags?: string[] | null
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      subtasks: {
-        Row: {
-          completed: boolean | null
-          created_at: string
-          deadline: string | null
-          dependencies: string[] | null
-          description: string | null
-          estimated_hours: number | null
-          id: string
-          roadmap_id: string
-          status: string | null
-          title: string
-        }
-        Insert: {
-          completed?: boolean | null
-          created_at?: string
-          deadline?: string | null
-          dependencies?: string[] | null
-          description?: string | null
-          estimated_hours?: number | null
-          id?: string
-          roadmap_id: string
-          status?: string | null
-          title: string
-        }
-        Update: {
-          completed?: boolean | null
-          created_at?: string
-          deadline?: string | null
-          dependencies?: string[] | null
-          description?: string | null
-          estimated_hours?: number | null
-          id?: string
-          roadmap_id?: string
-          status?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subtasks_roadmap_id_fkey"
-            columns: ["roadmap_id"]
-            isOneToOne: false
-            referencedRelation: "roadmaps"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
