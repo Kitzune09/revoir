@@ -14,7 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      roadmaps: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          subject: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          subject: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          subject?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subtasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          deadline: string | null
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          roadmap_id: string
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          roadmap_id: string
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          roadmap_id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtasks_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
